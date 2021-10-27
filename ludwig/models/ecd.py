@@ -89,14 +89,6 @@ class ECD(LudwigModule):
         }
         return inputs, targets
 
-    # TODO(shreya): Figure out model saving, loading.
-    '''
-    def get_connected_model(self, training=True, inputs=None):
-        inputs = inputs or self.get_model_inputs(training)
-        outputs = self.call(inputs)
-        return tf.keras.Model(inputs=inputs, outputs=outputs)
-    '''
-
     def save_savedmodel(self, save_path):
         keras_model = self.get_connected_model(training=False)
         keras_model.save(save_path)
@@ -119,7 +111,7 @@ class ECD(LudwigModule):
                 a dictionary of input names to input tensors and targets is a
                 dictionary of target names to target tensors.
             mask: A mask for the inputs.
-        
+
         Returns:
             A dictionary of output names to output tensors.
         """
@@ -230,7 +222,7 @@ class ECD(LudwigModule):
 
         # Add regularization loss
         if regularization_type is not None:
-                train_loss += reg_loss(
+            train_loss += reg_loss(
                 self,
                 regularization_type,
                 l1=regularization_lambda,

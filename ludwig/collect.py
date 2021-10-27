@@ -189,7 +189,7 @@ def print_model_summary(
         **kwargs
 ) -> None:
     """
-    Loads a pretrained model and prints names of weights and layers activations.
+    Loads a pretrained model and prints names of parameters.
 
     # Inputs
     :param model_path: (str) filepath to pre-trained model.
@@ -198,18 +198,18 @@ def print_model_summary(
     :return: (`None`)
     """
     model = LudwigModel.load(model_path)
-    collected_tensors = model.collect_weights()
-    names = [name for name, w in collected_tensors]
 
-    keras_model = model.model.get_connected_model(training=False)
-    keras_model.summary()
+    # TODO(justin): Enable when torchsummary supports dict inputs.
+    # https://pypi.org/project/torch-summary/
+    # torchsummary.summary(model.model, model.model.get_model_inputs(training=False))
 
-    print('\nLayers:\n')
-    for layer in keras_model.layers:
-        print(layer.name)
+    # TODO(justin): This can probably be replaced by torchsummary.
+    print('\nModel children:\n')
+    for name, _ in model.model.named_children():
+        print(name)
 
-    print('\nWeights:\n')
-    for name in names:
+    print('\nParameters:\n')
+    for name, _ in model.model.named_parameters():
         print(name)
 
 
