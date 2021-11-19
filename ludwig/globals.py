@@ -20,6 +20,13 @@ LUDWIG_VERSION = '0.5.dev0'
 MODEL_WEIGHTS_FILE_NAME = 'model_weights'
 MODEL_HYPERPARAMETERS_FILE_NAME = 'model_hyperparameters.json'
 TRAIN_SET_METADATA_FILE_NAME = 'training_set_metadata.json'
+TEST_STATISTICS_FILE_NAME = 'test_statistics.json'
+
+PREDICTIONS_PARQUET_FILE_NAME = 'predictions.parquet'
+PREDICTIONS_SHAPES_FILE_NAME = 'predictions.shapes.json'
+
+TRAINING_PREPROC_FILE_NAME = 'training.hdf5'
+
 TRAINING_PROGRESS_TRACKER_FILE_NAME = 'training_progress.json'
 TRAINING_CHECKPOINTS_DIR_PATH = 'training_checkpoints'
 

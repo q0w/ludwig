@@ -11,7 +11,8 @@ from tqdm import tqdm
 
 from ludwig.constants import COMBINED, LOGITS, LAST_HIDDEN
 from ludwig.data.dataset.base import Dataset
-from ludwig.globals import is_progressbar_disabled
+from ludwig.globals import is_progressbar_disabled, TEST_STATISTICS_FILE_NAME, PREDICTIONS_SHAPES_FILE_NAME, \
+    PREDICTIONS_PARQUET_FILE_NAME
 from ludwig.models.ecd import ECD
 from ludwig.utils.data_utils import flatten_df, from_numpy_dataset, save_json
 from ludwig.utils.horovod_utils import initialize_horovod, return_first
@@ -346,10 +347,10 @@ def save_prediction_outputs(
         postprocessed_output, backend
     )
     postprocessed_output.to_parquet(
-        os.path.join(output_directory, 'predictions.parquet')
+        os.path.join(output_directory, PREDICTIONS_PARQUET_FILE_NAME)
     )
     save_json(
-        os.path.join(output_directory, 'predictions.shapes.json'),
+        os.path.join(output_directory, PREDICTIONS_SHAPES_FILE_NAME),
         column_shapes
     )
 
@@ -357,7 +358,7 @@ def save_prediction_outputs(
 def save_evaluation_stats(test_stats, output_directory):
     test_stats_fn = os.path.join(
         output_directory,
-        'test_statistics.json'
+        TEST_STATISTICS_FILE_NAME
     )
     save_json(test_stats_fn, test_stats)
 

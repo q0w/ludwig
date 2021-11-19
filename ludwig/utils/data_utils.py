@@ -75,7 +75,7 @@ CACHEABLE_FORMATS = set.union(*(CSV_FORMATS, TSV_FORMATS,
                                 EXCEL_FORMATS, PARQUET_FORMATS, PICKLE_FORMATS,
                                 FEATHER_FORMATS, FWF_FORMATS, HTML_FORMATS,
                                 ORC_FORMATS, SAS_FORMATS, SPSS_FORMATS,
-                                STATA_FORMATS))
+                                STATA_FORMATS, HDF5_FORMATS))
 
 PANDAS_DF = pd
 
@@ -195,6 +195,10 @@ def read_spss(data_fp, df_lib):
 
 def read_stata(data_fp, df_lib):
     return df_lib.read_stata(data_fp)
+
+
+def read_hdf5(data_fp, df_lib):
+    return load_hdf5(data_fp, clean_cols=True)
 
 
 def save_csv(data_fp, data):
@@ -333,12 +337,15 @@ def save_hdf5(data_fp, data):
             h5_file.create_dataset(column, data=numpy_dataset[column])
 
 
-def load_hdf5(data_fp):
+def load_hdf5(data_fp, clean_cols=False):
     with download_h5(data_fp) as hdf5_data:
         columns = [s.decode('utf-8') for s in hdf5_data[HDF5_COLUMNS_KEY][()].tolist()]
 
         numpy_dataset = {}
         for column in columns:
+            if clean_cols:
+                # Column names from training hdf5 will be in the form 'Survived_a2fv4'
+                column = column.rsplit("_", 1)[0]
             numpy_dataset[column] = hdf5_data[column][()]
 
     return from_numpy_dataset(numpy_dataset)
@@ -825,7 +832,8 @@ external_data_reader_registry = {
     **{fmt: read_orc for fmt in ORC_FORMATS},
     **{fmt: read_sas for fmt in SAS_FORMATS},
     **{fmt: read_spss for fmt in SPSS_FORMATS},
-    **{fmt: read_stata for fmt in STATA_FORMATS}
+    **{fmt: read_stata for fmt in STATA_FORMATS},
+    **{fmt: read_hdf5 for fmt in HDF5_FORMATS}
 }
 
 

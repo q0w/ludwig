@@ -33,18 +33,26 @@ from ludwig.callbacks import Callback
 from ludwig.constants import *
 from ludwig.contrib import add_contrib_callback_args
 from ludwig.utils import visualization_utils
-from ludwig.utils.data_utils import load_from_file, load_json, load_array, \
-    to_numpy_dataset, unflatten_df, replace_file_extension
-from ludwig.utils.print_utils import logging_level_registry
 from ludwig.utils.data_utils import CACHEABLE_FORMATS, \
-    figure_data_format_dataset, external_data_reader_registry
+    figure_data_format_dataset, external_data_reader_registry, replace_file_extension
+from ludwig.utils.data_utils import load_from_file, load_json, load_array, \
+    to_numpy_dataset, unflatten_df, PANDAS_DF
 from ludwig.utils.misc_utils import get_from_registry
+from ludwig.utils.print_utils import logging_level_registry
 
 logger = logging.getLogger(__name__)
 
 
 _PREDICTIONS_SUFFIX = '_predictions'
 _PROBABILITIES_SUFFIX = '_probabilities'
+
+
+def _vectorize(ground_truth):
+    # hdf5 files generated during preprocessing don't need to be converted with str2idx
+    if isinstance(ground_truth, str) and (ground_truth.endswith('.h5') or ground_truth.endswith('.hdf5')):
+        return np.vectorize(lambda x, y: x)
+    else:
+        return np.vectorize(_encode_categorical_feature)
 
 
 def validate_conf_treshholds_and_probabilities_2d_3d(
@@ -1231,8 +1239,9 @@ def calibration_1_vs_all_cli(
         ground_truth_split,
         split_file
     )
+
     feature_metadata = metadata[output_feature_name]
-    vfunc = np.vectorize(_encode_categorical_feature)
+    vfunc = _vectorize(ground_truth)
     ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     col = f'{output_feature_name}{_PROBABILITIES_SUFFIX}'
@@ -1592,7 +1601,7 @@ def compare_classifiers_performance_from_prob(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     top_n_classes_list = convert_to_list(top_n_classes)
@@ -1690,7 +1699,7 @@ def compare_classifiers_performance_from_pred(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     predictions_per_model = [
@@ -1800,7 +1809,7 @@ def compare_classifiers_performance_subset(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     top_n_classes_list = convert_to_list(top_n_classes)
@@ -1929,7 +1938,7 @@ def compare_classifiers_performance_changing_k(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     k = top_k
@@ -2191,7 +2200,7 @@ def compare_classifiers_predictions(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     model_names_list = convert_to_list(model_names)
@@ -2345,7 +2354,7 @@ def compare_classifiers_predictions_distribution(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     model_names_list = convert_to_list(model_names)
@@ -2426,7 +2435,7 @@ def confidence_thresholding(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     if labels_limit > 0:
@@ -2528,7 +2537,7 @@ def confidence_thresholding_data_vs_acc(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     if labels_limit > 0:
@@ -2646,7 +2655,7 @@ def confidence_thresholding_data_vs_acc_subset(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     top_n_classes_list = convert_to_list(top_n_classes)
@@ -2793,7 +2802,7 @@ def confidence_thresholding_data_vs_acc_subset_per_class(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     filename_template = \
@@ -2944,7 +2953,7 @@ def confidence_thresholding_2thresholds_2d(
     if not isinstance(ground_truths[0], np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[threshold_output_feature_names[0]]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         gt_1 = vfunc(ground_truths[0], feature_metadata['str2idx'])
         feature_metadata = metadata[threshold_output_feature_names[1]]
         gt_2 = vfunc(ground_truths[1], feature_metadata['str2idx'])
@@ -3146,10 +3155,11 @@ def confidence_thresholding_2thresholds_3d(
     if not isinstance(ground_truths[0], np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[threshold_output_feature_names[0]]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truths[0])
         gt_1 = vfunc(ground_truths[0], feature_metadata['str2idx'])
         feature_metadata = metadata[threshold_output_feature_names[1]]
-        gt_2 = vfunc(ground_truths[1], feature_metadata['str2idx'])
+        vfunc2 = _vectorize(ground_truths[1])
+        gt_2 = vfunc2(ground_truths[1], feature_metadata['str2idx'])
     else:
         gt_1 = ground_truths[0]
         gt_2 = ground_truths[1]
@@ -3279,7 +3289,7 @@ def binary_threshold_vs_metric(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     probs = probabilities_per_model
@@ -3408,7 +3418,7 @@ def roc_curves(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     probs = probabilities_per_model
@@ -3548,7 +3558,7 @@ def calibration_1_vs_all(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     probs = probabilities_per_model
@@ -3590,7 +3600,7 @@ def calibration_1_vs_all(
             # class we are interested in, the input class index
 
             gt_class = (ground_truth == class_idx).astype(int)
-            prob_class = prob[:, class_idx]
+            prob_class = prob[:, class_idx][:len(ground_truth)]
 
             (
                 curr_fraction_positives,
@@ -3693,7 +3703,7 @@ def calibration_multiclass(
     if not isinstance(ground_truth, np.ndarray):
         # not np array, assume we need to translate raw value to encoded value
         feature_metadata = metadata[output_feature_name]
-        vfunc = np.vectorize(_encode_categorical_feature)
+        vfunc = _vectorize(ground_truth)
         ground_truth = vfunc(ground_truth, feature_metadata['str2idx'])
 
     probs = probabilities_per_model

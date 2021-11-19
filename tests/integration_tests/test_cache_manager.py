@@ -7,6 +7,7 @@ import pytest
 from ludwig.constants import META, TRAINING, VALIDATION, TEST, CHECKSUM
 from ludwig.data.cache.manager import CacheManager, alphanum
 from ludwig.data.dataset.pandas import PandasDatasetManager
+from ludwig.globals import TRAINING_PREPROC_FILE_NAME
 
 from tests.integration_tests.utils import sequence_feature, category_feature, LocalTestBackend
 
@@ -61,7 +62,7 @@ def test_cache_dataset(use_cache_dir, use_split, tmpdir):
         val_path = os.path.join(tmpdir, 'validation')
 
     assert cache_map[META] == f'{train_path}.meta.json'
-    assert cache_map[TRAINING] == f'{train_path}.training.hdf5'
+    assert cache_map[TRAINING] == f'{train_path}.{TRAINING_PREPROC_FILE_NAME}'
     assert cache_map[TEST] == f'{test_path}.test.hdf5'
     assert cache_map[VALIDATION] == f'{val_path}.validation.hdf5'
 
