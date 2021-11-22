@@ -343,10 +343,9 @@ def load_hdf5(data_fp, clean_cols=False):
 
         numpy_dataset = {}
         for column in columns:
-            if clean_cols:
-                # Column names from training hdf5 will be in the form 'Survived_a2fv4'
-                column = column.rsplit("_", 1)[0]
-            numpy_dataset[column] = hdf5_data[column][()]
+            # Column names from training hdf5 will be in the form 'Survived_a2fv4'
+            np_col = column.rsplit("_", 1)[0] if clean_cols else column
+            numpy_dataset[np_col] = hdf5_data[column][()]
 
     return from_numpy_dataset(numpy_dataset)
 
